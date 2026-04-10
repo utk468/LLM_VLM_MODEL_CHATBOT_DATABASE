@@ -19,6 +19,12 @@
     z-index: 5;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .chat-header h2 {
     font-size: 1.3rem;
     font-weight: 800;
