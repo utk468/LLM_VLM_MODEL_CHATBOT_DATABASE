@@ -29,31 +29,34 @@ def chat_node_tools(state: ChatState):
     """
     messages = state["messages"]
 
-    # SMART SWITCHING: 
-    # If the last message is from a tool, we use the PLAIN llm to avoid Groq validation issues.
-    # If not, we use get_llm_with_tools to allow the model to trigger a tool.
-    if messages and messages[-1].type == "tool":
-        model_to_use = llm
-    else:
-        model_to_use = get_llm_with_tools()
-
-    # COMPLEX & ROBUST SYSTEM PROMPT FOR TOOL CALLING
-    formatting_instruction = SystemMessage(content="""
-You are an advanced AI assistant with permission to use specific tools.
-Guidelines for using tools:
-1. When you need real-time data, facts, or news, you MUST use the appropriate tool.
-2. NEVER output tool-calling JSON as plain text in your visible response bubble. 
-3. NEVER describe that you are about to use a tool; just execute it natively via the API.
-4. If a tool is called, keep your visible 'content' empty or limited to a natural lead-in IF and ONLY IF the tool call is also sent correctly.
-5. Ensure tool names (e.g., 'web_search') are exactly as defined.
-
-Failure to use the native tool-calling protocol will result in a technical failure.
+    # REASONING PROMPT: Used when the model needs to decide which tool to use.
+    reasoning_instruction = SystemMessage(content="""
+You are an advanced AI assistant. Your goal is to help the user by using tools when necessary.
+Guidelines:
+1. For real-time data, facts, news, or weather, you MUST use the appropriate tool.
+2. Output a native tool call. DO NOT wrap it in text or conversational fillers.
+3. If you have enough information, answer the user directly.
 """)
 
+    # SUMMARIZATION PROMPT: Used after a tool has returned data.
+    summarization_instruction = SystemMessage(content="""
+You are a helpful assistant. You have just received information from a tool.
+Your task is to summarize this information naturally for the user.
+DO NOT call any more tools. Just explain the results you were given.
+""")
+
+    if messages and messages[-1].type == "tool":
+        model_to_use = llm
+        current_instruction = summarization_instruction
+        print("--- MODE: Summarizing Tool Result ---")
+    else:
+        model_to_use = get_llm_with_tools()
+        current_instruction = reasoning_instruction
+        print("--- MODE: Reasoning/Tool Selection ---")
+
     try:
-        # CONSOLIDATE SYSTEM MESSAGES: Groq often fails if there are multiple system messages.
-        # We merge the complex instructions with any existing system messages into one.
-        system_content = formatting_instruction.content
+        # CONSOLIDATE SYSTEM MESSAGES
+        system_content = current_instruction.content
         conv_messages = []
         
         for m in messages:
