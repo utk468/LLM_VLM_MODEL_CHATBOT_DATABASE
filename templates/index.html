@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph AI Assistant</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/chat.css">
+    <link rel="stylesheet" href="/static/css/input.css">
+    <link rel="stylesheet" href="/static/css/mcp.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i data-lucide="bot"></i>
+                <span>LangGraph AI</span>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i data-lucide="layers"></i> Models</h3>
+                <div class="model-list">
+                    <div class="model-item active" id="model-pro">
+                        <i data-lucide="zap"></i>
+                        <div class="model-info">
+                            <span class="model-name">Pro</span>
+                            <span class="model-desc">RAG & Tools</span>
+                        </div>
+                    </div>
+                    <div class="model-item" id="model-vision">
+                        <i data-lucide="eye"></i>
+                        <div class="model-info">
+                            <span class="model-name">Vision</span>
+                            <span class="model-desc">Image Analysis</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="new-chat-btn" class="btn-new-chat">
+                <i data-lucide="plus-circle"></i> New Chat
+            </button>
+            
+            <div class="sidebar-section">
+                <h3><i data-lucide="file-text"></i> Knowledge Base</h3>
+                <div class="upload-area" id="upload-area">
+                    <input type="file" id="file-input" hidden accept=".pdf,.txt">
+                    <div class="upload-placeholder">
+                        <i data-lucide="upload-cloud"></i>
+                        <p>Upload PDF or TXT</p>
+                    </div>
+                    <div id="file-info" class="file-info hidden">
+                        <span id="filename"></span>
+                        <button id="remove-file"><i data-lucide="x"></i></button>
+                    </div>
+                </div>
+                <div id="upload-status"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i data-lucide="server"></i> MCP Server</h3>
+                <div class="mcp-connector-card">
+                    <div id="mcp-status-text" class="status-badge disconnected">Disconnected</div>
+                    <div id="mcp-server-name" class="server-name hidden"></div>
+                    <button id="connect-mcp-btn" class="btn-connect">
+                        <i data-lucide="unplug"></i> Connect Expense Tracker
+                    </button>
+                    <button id="disconnect-mcp-btn" class="btn-disconnect hidden">
+                        <i data-lucide="power"></i> Disconnect
+                    </button>
+                    <div id="mcp-tool-count" class="tool-count hidden" style="cursor: pointer;" title="Click to view tools"></div>
+                    <div id="mcp-tool-list" class="mcp-tool-list hidden"></div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i data-lucide="wrench"></i> Static Tools</h3>
+                <div id="static-tool-list" class="mcp-tool-list">
+                    <!-- Static tools will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="sidebar-section conversations">
+                <h3><i data-lucide="history"></i> Recent Chats</h3>
+                <div id="thread-list" class="thread-list">
+                    <!-- here all threads will be stored from session -->
+                </div>
+            </div>
+        </aside>
+
+        <main class="chat-area">
+            <header class="chat-header">
+                <h2 id="current-thread-title">New Conversation</h2>
+                <div class="header-actions">
+                    <span id="connection-status" class="status-online"></span>
+                    <span id="user-display-name" style="margin-left: 15px; font-weight: 600; color: var(--text-primary);"></span>
+                    <button id="logout-btn" class="btn-icon-secondary" style="margin-left: 10px;" title="Logout">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div id="chat-messages" class="chat-messages">
+                <div class="welcome-message">
+                    <i data-lucide="sparkles"></i>
+                    <h1>How can I help you today?</h1>
+                    <p>I can search the web, calculate math, analyze documents, or just chat with you.</p>
+                </div>
+            </div>
+
+            <div id="hitl-overlay" class="hitl-overlay hidden">
+                <div class="hitl-card">
+                    <h3><i data-lucide="alert-triangle"></i> Action Required</h3>
+                    <p id="hitl-message"></p>
+                    <div class="hitl-actions">
+                        <button id="allow-btn" class="btn-primary">Allow</button>
+                        <button id="deny-btn" class="btn-secondary">Deny</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Confirmation Modal -->
+            <div id="confirm-modal-overlay" class="hitl-overlay hidden">
+                <div class="hitl-card">
+                    <h3><i data-lucide="trash-2"></i> Delete Chat?</h3>
+                    <p id="confirm-modal-message">Are you sure you want to delete this conversation? This action cannot be undone.</p>
+                    <div class="hitl-actions">
+                        <button id="confirm-modal-cancel" class="btn-secondary">Cancel</button>
+                        <button id="confirm-modal-delete" class="btn-primary btn-delete">Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <!-- Compact Image Preview Inside -->
+                    <div id="image-preview-container" class="image-preview-container hidden">
+                        <img id="image-preview-img" src="" alt="Preview">
+                        <button id="remove-image-preview" class="btn-remove-preview"><i data-lucide="x"></i></button>
+                    </div>
+
+                    <button id="image-upload-btn" class="btn-icon-secondary hidden" title="Upload Image">
+                        <i data-lucide="image"></i>
+                    </button>
+                    <input type="file" id="image-input" hidden accept="image/*">
+                    <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
+                    <button id="send-btn" class="btn-send">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+                <p class="input-footer">Vision Mode: Upload active</p>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/static/main.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

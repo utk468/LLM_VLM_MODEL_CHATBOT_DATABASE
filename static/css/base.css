@@ -1,0 +1,42 @@
+:root {
+    --bg-main: #000000;
+    --sidebar-bg: #000000;
+    --sidebar-hover: #1e293b;
+    --sidebar-text: #f8faff;
+    --gemini-blue: #4285F4;
+    --gemini-purple: #9B72CB;
+    --gemini-red: #D96570;
+    --gemini-gradient: linear-gradient(90deg, #4285F4 0%, #9B72CB 50%, #D96570 100%);
+    --card-bg: #111827;
+    --text-main: #FFFFFF;
+    --text-muted: #94A3B8;
+    --border-color: #1E293B;
+    --user-msg-bg: #1E293B;
+    --ai-msg-bg: transparent;
+    --ai-msg-shadow: none;
+    --glass-bg: rgba(0, 0, 0, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
