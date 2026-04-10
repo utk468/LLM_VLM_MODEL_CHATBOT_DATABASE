@@ -24,3 +24,4 @@ passlib
 bcrypt
 pyjwt
 python-multipart
+gunicorn
