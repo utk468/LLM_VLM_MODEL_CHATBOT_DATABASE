@@ -37,8 +37,8 @@ async def delete_thread_from_db(thread_id: str):
 async def associate_thread_with_user(thread_id: str, user_id: str):
     return await database.associate_thread_with_user(thread_id, user_id)
 
-async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: str):
-    return await database.add_chat_to_thread(user_id, thread_id, query, answer)
+async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: str, image: str = None):
+    return await database.add_chat_to_thread(user_id, thread_id, query, answer, image=image)
 
 # Property-like access for chatbot
 def __getattr__(name):
