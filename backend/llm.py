@@ -33,4 +33,5 @@ def get_llm_with_tools():
         else:
             print(f" Skipping tool {getattr(t, 'name', 'unknown')} due to missing description.")
     
+    print(f"🛠️ Binding {len(all_tools)} tools to the LLM: {[t.name for t in all_tools]}")
     return llm.bind_tools(all_tools, tool_choice="auto")

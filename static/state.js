@@ -26,7 +26,7 @@ export function startNewChat(onThreadChange) {
     document.getElementById('chat-messages').innerHTML = `
         <div class="welcome-message">
             <h1>How can I help you today?</h1>
-            <p>I can search the web, calculate math, analyze documents, or just chat with you.</p>
+            <p>I can search the web, calculate math, or just chat with you.</p>
         </div>`;
     // taking the current thread title div and setting its inner html to "New Conversation"
     // this is done to display the new thread title to the user
@@ -172,7 +172,7 @@ export async function loadChatHistory(id) {
                 <div class="welcome-message">
                     <i data-lucide="sparkles"></i>
                     <h1>How can I help you today?</h1>
-                    <p>I can search the web, calculate math, analyze documents, or just chat with you.</p>
+                    <p>I can search the web, calculate math, or just chat with you.</p>
                 </div>`;
         }
         // calling the lucide.createIcons() function to create the icons

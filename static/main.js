@@ -164,10 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentThreadId = startNewChat(refreshThreads);
     });
 
-    // File upload area click
-    uploadArea.addEventListener('click', () => fileInput.click());
-    // File upload area change
-    fileInput.addEventListener('change', handleFileUpload);
+    // File upload area click (Safety check since RAG was removed)
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
+    }
 
 
 
