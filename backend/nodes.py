@@ -41,17 +41,19 @@ CRITICAL RULES:
 
     # SUMMARIZATION PROMPT: Used after a tool has returned data.
     summarization_instruction = SystemMessage(content="""
-You are a helpful assistant. You have just received information from a tool.
-Your task is to summarize this information naturally for the user.
-DO NOT call any more tools. Just explain the results you were given.
+You are a helpful assistant. You have just received the actual LIVE data from a tool.
+Your ONLY task is to summarize this data for the user.
+1. NEVER say 'I am an AI' or 'I don't have access'. The data is RIGHT THERE in the Tool Message.
+2. Just read the tool output and explain it.
 """)
 
+    # Always use tool-enabled model so Groq doesn't reject ToolMessages in history
+    model_to_use = get_llm_with_tools()
+
     if messages and messages[-1].type == "tool":
-        model_to_use = llm
         current_instruction = summarization_instruction
         print("--- MODE: Summarizing Tool Result ---")
     else:
-        model_to_use = get_llm_with_tools()
         current_instruction = reasoning_instruction
         print("--- MODE: Reasoning/Tool Selection ---")
 

@@ -5,7 +5,7 @@ from mcp.client.sse import sse_client
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, create_model, Field
 import json
-
+import httpx
 
 
 class MCPToolManager:
@@ -29,13 +29,29 @@ class MCPToolManager:
             from contextlib import AsyncExitStack
             self._exit_stack = AsyncExitStack()
             
-            # 1. Connect to SSE
-            read_stream, write_stream = await self._exit_stack.enter_async_context(sse_client(url))
+            # 1. WAKE UP REMOTE SERVER (Render Services go to sleep)
+          
+            print(f" MCP: Waking up server at {url}...")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                try:
+                    # Just a simple ping to trigger Render's spin-up logic
+                    await client.get(url.replace('/sse', ''))
+                except Exception as ping_err:
+                    print(f" MCP Wake-up Ping Warning: {ping_err}")
+
+            # 2. Connect to SSE
+            print(f" MCP: Connecting to SSE stream...")
+            try:
+                # Use a combined context manager for better TaskGroup handling
+                read_stream, write_stream = await self._exit_stack.enter_async_context(sse_client(url))
+                
+                # 3. Start Session
+                self._session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
+            except Exception as task_err:
+                # This catches the "unhandled errors in a TaskGroup" and provides a better message
+                return False, f"Server unreachable. It might be asleep or starting up. Please try again in 30 seconds."
             
-            # 2. Start Session
-            self._session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
-            
-            # 3. Initialize
+            # 4. Initialize
             await self._session.initialize()
             
             # 4. Fetch Tools
