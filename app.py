@@ -1,4 +1,6 @@
 import uvicorn
+import os
+print("🚀 Starting app.py...")
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,14 +20,23 @@ from backend.config import MONGODB_URI, DATABASE_NAME
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Initializing LangGraph Chatbot with MongoDBSaver...")
+    print(f"🔗 Connecting to MongoDB: {DATABASE_NAME}...")
+    # Initialize MongoDB client with a timeout to prevent hanging forever
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
     
-    # Initialize MongoDB client
-    client = MongoClient(MONGODB_URI)
+    # Check connection
+    try:
+        client.admin.command('ping')
+        print("✅ MongoDB connection successful.")
+    except Exception as e:
+        print(f"❌ MongoDB connection FAILED: {str(e)}")
+        raise e
+
     checkpointer = MongoDBSaver(client, db_name=DATABASE_NAME)
     
+    print("🤖 Initializing LangGraph Chatbot...")
     await init_chatbot(checkpointer)
-    print("Chatbot initialized successfully.")
+    print("✅ Chatbot initialized successfully.")
         
     yield
     
