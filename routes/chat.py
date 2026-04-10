@@ -164,6 +164,7 @@ async def vision_chat(request: Request, user_id: str = Depends(get_current_user)
             await associate_thread_with_user(thread_id, user_id)
 
             # SAVE TO MONGODB (LONG MEMORY - HIERARCHICAL SYNC)
+            print(f"--- SYNCING VISION TO DB: Image size {len(active_image) if active_image else 0} ---")
             await add_chat_to_thread(user_id, thread_id, prompt, response_text, image=active_image)
 
             # Also save to VLM Records list in User document

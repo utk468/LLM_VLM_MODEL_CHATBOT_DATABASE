@@ -43,9 +43,13 @@ async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: s
         }
         
         if image:
+            # Ensure the image has a proper base64 prefix if missing
+            if not image.startswith("data:image"):
+                image = f"data:image/png;base64,{image}"
             chat_entry["image"] = image
+            print(f" DEBUG: Capturing image for storage (Size: {len(image)} chars)")
 
-        await db[USERS_COLLECTION].update_one(
+        result = await db[USERS_COLLECTION].update_one(
             {"_id": user_id, "threads.thread_id": thread_id},
             {
                 "$push": {
@@ -54,8 +58,10 @@ async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: s
                 "$set": {"threads.$.updated_at": datetime.now()}
             }
         )
+        if result.modified_count == 0:
+            print(" WARNING: MongoDB update matched 0 documents. Image not saved.")
     except Exception as e:
-        print(f"Error adding chat to thread: {str(e)}")
+        print(f" ERROR adding chat to thread: {str(e)}")
 
 async def get_all_threads(user_id: str = None, chatbot=None):
     """
