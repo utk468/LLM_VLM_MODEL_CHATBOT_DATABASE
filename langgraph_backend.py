@@ -20,11 +20,7 @@ import backend.graph as graph_mod
 from tools import (
     calculator,
     web_search,
-    wikipedia,
-    query_uploaded_document,
-    ingest_document,
-    clear_document,
-    is_document_ingested
+    wikipedia
 )
 
 # Database/Thread management wrappers for compatibility

@@ -3,8 +3,7 @@ from backend.config import DEFAULT_MODEL
 from tools import (
     calculator,
     web_search,
-    wikipedia,
-    query_uploaded_document
+    wikipedia
 )
 from tools.mcp_tools import mcp_manager
 
@@ -18,8 +17,7 @@ llm = ChatGroq(
 static_tools = [
     calculator,
     web_search,
-    wikipedia,
-    query_uploaded_document
+    wikipedia
 ]
 
 def get_llm_with_tools():
@@ -33,6 +31,6 @@ def get_llm_with_tools():
         if hasattr(t, "description") and t.description:
             all_tools.append(t)
         else:
-            print(f"⚠️ Skipping tool {getattr(t, 'name', 'unknown')} due to missing description.")
+            print(f" Skipping tool {getattr(t, 'name', 'unknown')} due to missing description.")
     
     return llm.bind_tools(all_tools, tool_choice="auto")
