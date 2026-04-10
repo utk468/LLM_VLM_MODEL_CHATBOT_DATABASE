@@ -4,7 +4,10 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.tools import tool
 
+print("🧠 Loading HuggingFace Embeddings (all-MiniLM-L6-v2)...")
 embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+print("✅ Embeddings loaded successfully.")
+
 vector_store = InMemoryVectorStore(embedding=embedding)
 
 def clear_document():
