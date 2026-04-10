@@ -27,23 +27,29 @@ async def associate_thread_with_user(thread_id: str, user_id: str):
     except Exception as e:
         print(f"Error associating thread with user: {str(e)}")
 
-async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: str):
+async def add_chat_to_thread(user_id: str, thread_id: str, query: str, answer: str, image: str = None):
     """
     Adds a new chat turn (query and answer) to a specific thread in the user's document.
+    Optionally stores an image (Base64) if provided.
     """
     try:
         client = AsyncIOMotorClient(MONGODB_URI)
         db = client[DATABASE_NAME]
         
+        chat_entry = {
+            "query": query,
+            "answer": answer,
+            "timestamp": datetime.now()
+        }
+        
+        if image:
+            chat_entry["image"] = image
+
         await db[USERS_COLLECTION].update_one(
             {"_id": user_id, "threads.thread_id": thread_id},
             {
                 "$push": {
-                    "threads.$.chats": {
-                        "query": query,
-                        "answer": answer,
-                        "timestamp": datetime.now()
-                    }
+                    "threads.$.chats": chat_entry
                 },
                 "$set": {"threads.$.updated_at": datetime.now()}
             }

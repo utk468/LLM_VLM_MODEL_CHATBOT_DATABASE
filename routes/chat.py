@@ -164,7 +164,7 @@ async def vision_chat(request: Request, user_id: str = Depends(get_current_user)
             await associate_thread_with_user(thread_id, user_id)
 
             # SAVE TO MONGODB (LONG MEMORY - HIERARCHICAL SYNC)
-            await add_chat_to_thread(user_id, thread_id, prompt, response_text)
+            await add_chat_to_thread(user_id, thread_id, prompt, response_text, image=active_image)
 
             # Also save to VLM Records list in User document
             saved = await vision_memory_db.save_analysis(
@@ -256,10 +256,15 @@ async def get_history(thread_id: str, user_id: str = Depends(get_current_user)):
 
     formatted = []
     for chat in thread.get("chats", []):
-        formatted.append({
+        human_msg = {
             "role": "human",
             "content": chat["query"]
-        })
+        }
+        if chat.get("image"):
+            human_msg["image"] = chat["image"]
+            
+        formatted.append(human_msg)
+        
         formatted.append({
             "role": "assistant",
             "content": chat["answer"]
@@ -357,7 +362,14 @@ async def chat(request: Request, user_id: str = Depends(get_current_user)):
                             break
                     
                     if ai_response:
-                        await add_chat_to_thread(user_id, thread_id, user_msg, ai_response)
+                        # Check for image in user message (multimodal support for standard chat)
+                        img_to_save = None
+                        if isinstance(user_msg, list):
+                            for part in user_msg:
+                                if isinstance(part, dict) and part.get("type") == "image_url":
+                                    img_to_save = part["image_url"]["url"]
+                        
+                        await add_chat_to_thread(user_id, thread_id, str(user_msg), ai_response, image=img_to_save)
                         print(f"Chat turn synced to User doc (Thread: {thread_id})")
 
                 yield f"data: {json.dumps({'type': 'end'})}\n\n"
@@ -437,7 +449,6 @@ async def resume(request: Request, user_id: str = Depends(get_current_user)):
         # After streaming → sync and return
         new_state = await langgraph_backend.chatbot.aget_state(config)
         
-        # SYNC TO HIERARCHICAL SCHEMA
         # Extract user message and final AI message
         msgs = new_state.values.get("messages", [])
         if len(msgs) >= 2:
@@ -451,7 +462,17 @@ async def resume(request: Request, user_id: str = Depends(get_current_user)):
                 if ai_msg and user_msg: break
             
             if user_msg and ai_msg:
-                await add_chat_to_thread(user_id, thread_id, user_msg, ai_msg)
+                # Extract image if present in history
+                img_to_save = None
+                for m in reversed(msgs):
+                    if isinstance(m, HumanMessage) and isinstance(m.content, list):
+                        for part in m.content:
+                            if isinstance(part, dict) and part.get("type") == "image_url":
+                                img_to_save = part["image_url"]["url"]
+                                break
+                    if img_to_save: break
+                
+                await add_chat_to_thread(user_id, thread_id, user_msg, ai_msg, image=img_to_save)
 
         if new_state.next and "tools" in new_state.next:
             tool_call = None
