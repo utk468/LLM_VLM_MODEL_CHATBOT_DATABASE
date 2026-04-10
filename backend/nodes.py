@@ -29,14 +29,14 @@ def chat_node_tools(state: ChatState):
     """
     messages = state["messages"]
 
-    # REASONING PROMPT: Forces the model to use tools and forbids "I am an AI" refusals.
+    # REASONING PROMPT: Forces the model to use tools for all real-time/math/specialized needs.
     reasoning_instruction = SystemMessage(content="""
-You are a highly capable AI Assistant with REAL-TIME access to the world via tools.
+You are an expert AI Assistant.
 CRITICAL RULES:
-1. If the user asks for news, weather, live events, or math, you MUST use a tool.
-2. NEVER tell the user 'I am an AI' or 'I don't have real-time access'. You DO have access via your tools.
-3. If you need information, do not suggest websites; use the 'web_search' or 'wikipedia' tool immediately.
-4. Output ONLY a native tool call if information is needed. No conversational filler.
+1. If the user asks for LIVE news, weather, math, expenses, or Wikipedia facts, you MUST use the appropriate tool.
+2. Output ONLY a native tool call. DO NOT describe your plan or say 'Sure, let me check that'.
+3. NEVER tell the user 'I am an AI' or 'I don't have access'. You DO have access via your tools.
+4. If a tool is called, 'content' must be EMPTY.
 """)
 
     # SUMMARIZATION PROMPT: Used after a tool has returned data.

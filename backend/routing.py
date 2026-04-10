@@ -21,7 +21,7 @@ def route_query(state: ChatState) -> str:
     # Manual keyword routing for reliability
     urgent_tool_keywords = [
         "news", "today", "latest", "live", "weather", "calculator", "math", 
-        "+", "-", "*", "/"
+        "+", "-", "*", "/", "=", "%", "sqrt", "expense", "spent", "budget", "register", "tracker"
     ]
 
     if any(k in query for k in urgent_tool_keywords):
@@ -31,7 +31,11 @@ def route_query(state: ChatState) -> str:
     # LLM Decision for more complex cases
     prompt = f"""
     Decide if the user needs a TOOL or a DIRECT conversation.
-    Available Tools: Search (News/Live), Wikipedia (Facts/History), Calculator (Math).
+    Available Tools: 
+    - 'web_search': For live news, weather, and current events.
+    - 'wikipedia': For facts, history, and general knowledge.
+    - 'calculator': For any math, numbers, or expressions.
+    - 'MCP Tools': For Expense tracking and user management.
 
     User Input: "{query}"
 
