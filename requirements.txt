@@ -8,10 +8,10 @@ langchain-mongodb
 langgraph-checkpoint-mongodb
 motor
 pymongo
-pymongo
 pydantic
 python-dotenv
 requests
+Pillow
 mcp[sse]
 wikipedia
 duckduckgo-search
