@@ -7,10 +7,8 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from backend.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Password hashing config
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# OAuth2 scheme for extracting token from header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def verify_password(plain_password, hashed_password):
@@ -30,9 +28,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Dependency to obtain the current user ID securely from JWT.
-    """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -44,5 +40,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         if user_id is None:
             raise credentials_exception
         return user_id
-    except jwt.PyJWTError: # Handles expired and invalid tokens
+    except jwt.PyJWTError:                                     
         raise credentials_exception

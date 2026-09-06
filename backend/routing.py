@@ -1,51 +1,13 @@
-from langchain_core.messages import HumanMessage
 from backend.state import ChatState
-from backend.llm import llm
 
 def route_query(state: ChatState) -> str:
-    """
-    Determines whether to route to a tool-enabled node or a direct chat node.
-    Uses keyword matching and LLM decision making for routing.
-    """
-    messages = state["messages"]
+    messages = state.get("messages", [])
     if not messages:
         return "chat_node_direct"
 
-    # If already in a tool loop
-    if messages[-1].type == "tool":
+    last_msg = messages[-1]
+    if getattr(last_msg, "type", None) == "tool":
         print("--- ROUTING: Continuing Tool Loop ---")
         return "chat_node_tools"
 
-    query = str(messages[-1].content).lower()
-
-    # Manual keyword routing for reliability
-    urgent_tool_keywords = [
-        "news", "today", "latest", "live", "weather", "calculator", "math", 
-        "+", "-", "*", "/", "=", "%", "sqrt", "expense", "spent", "budget", "register", "tracker"
-    ]
-
-    if any(k in query for k in urgent_tool_keywords):
-        print(f"--- ROUTING: Tool Path (Keyword Match: '{query}') ---")
-        return "chat_node_tools"
-
-    # LLM Decision for more complex cases
-    prompt = f"""
-    Decide if the user needs a TOOL or a DIRECT conversation.
-    Available Tools: 
-    - 'web_search': For live news, weather, and current events.
-    - 'wikipedia': For facts, history, and general knowledge.
-    - 'calculator': For any math, numbers, or expressions.
-    - 'MCP Tools': For Expense tracking and user management.
-
-    User Input: "{query}"
-
-    Respond only with 'TOOL' or 'DIRECT'.
-    """
-    
-    try:
-        decision = llm.invoke([HumanMessage(content=prompt)]).content.strip().upper()
-        print(f"--- ROUTING DECISION: {decision} ---")
-        return "chat_node_tools" if "TOOL" in decision else "chat_node_direct"
-    except Exception as e:
-        print(f"--- ROUTING ERROR: {e}. Defaulting to Direct. ---")
-        return "chat_node_direct"
+    return "chat_node_tools"

@@ -1,6 +1,6 @@
 import uvicorn
 import os
-print("🚀 Starting app.py...")
+print("Starting app.py...")
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,30 +16,27 @@ from langgraph.checkpoint.mongodb import MongoDBSaver
 from pymongo import MongoClient
 from backend.config import MONGODB_URI, DATABASE_NAME
 
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"🔗 Connecting to MongoDB: {DATABASE_NAME}...")
-    # Initialize MongoDB client with a timeout to prevent hanging forever
+    print(f" Connecting to MongoDB: {DATABASE_NAME}...")
+
     client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-    
-    # Check connection
+
     try:
         client.admin.command('ping')
-        print("✅ MongoDB connection successful.")
+        print(" MongoDB connection successful.")
     except Exception as e:
-        print(f"❌ MongoDB connection FAILED: {str(e)}")
+        print(f" MongoDB connection FAILED: {str(e)}")
         raise e
 
     checkpointer = MongoDBSaver(client, db_name=DATABASE_NAME)
-    
-    print("🤖 Initializing LangGraph Chatbot...")
+
+    print(" Initializing LangGraph Chatbot...")
     await init_chatbot(checkpointer)
-    print("✅ Chatbot initialized successfully.")
-        
+    print(" Chatbot initialized successfully.")
+
     yield
-    
+
     print("Shutting down...")
     await mcp_manager.disconnect()
     client.close()
@@ -49,7 +46,7 @@ def create_app():
         title="Fast Chatbot with RAG & MCP",
         lifespan=lifespan
     )
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -57,15 +54,15 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     app.include_router(index_router)
     app.include_router(auth_router)
     app.include_router(chat_router)
     app.include_router(mcp_router)
     app.include_router(tools_router)
-    
+
     app.mount("/static", StaticFiles(directory="static"), name="static")
-    
+
     return app
 
 app = create_app()

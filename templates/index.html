@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/css/mcp.css">
     <link rel="stylesheet" href="/static/css/components.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -65,14 +66,14 @@
             <div class="sidebar-section">
                 <h3><i data-lucide="wrench"></i> Static Tools</h3>
                 <div id="static-tool-list" class="mcp-tool-list">
-                    <!-- Static tools will be loaded here -->
+                    
                 </div>
             </div>
             
             <div class="sidebar-section conversations">
                 <h3><i data-lucide="history"></i> Recent Chats</h3>
                 <div id="thread-list" class="thread-list">
-                    <!-- here all threads will be stored from session -->
+                    
                 </div>
             </div>
         </aside>
@@ -81,7 +82,6 @@
             <header class="chat-header">
                 <h2 id="current-thread-title">New Conversation</h2>
                 <div class="header-actions">
-                    <span id="connection-status" class="status-online"></span>
                     <span id="user-display-name" style="margin-left: 15px; font-weight: 600; color: var(--text-primary);"></span>
                     <button id="logout-btn" class="btn-icon-secondary" style="margin-left: 10px;" title="Logout">
                         <i data-lucide="log-out"></i>
@@ -108,7 +108,7 @@
                 </div>
             </div>
 
-            <!-- Custom Confirmation Modal -->
+            
             <div id="confirm-modal-overlay" class="hitl-overlay hidden">
                 <div class="hitl-card">
                     <h3><i data-lucide="trash-2"></i> Delete Chat?</h3>
@@ -122,7 +122,7 @@
 
             <div class="chat-input-container">
                 <div class="input-wrapper">
-                    <!-- Compact Image Preview Inside -->
+                    
                     <div id="image-preview-container" class="image-preview-container hidden">
                         <img id="image-preview-img" src="" alt="Preview">
                         <button id="remove-image-preview" class="btn-remove-preview"><i data-lucide="x"></i></button>

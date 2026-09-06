@@ -7,57 +7,47 @@ from pydantic import BaseModel, create_model, Field
 import json
 import httpx
 
-
 class MCPToolManager:
     def __init__(self):
         self.tools: List[StructuredTool] = []
         self.connected_url: Optional[str] = None
         self.is_connected = False
-        
+
         self._session: Optional[ClientSession] = None
         self._exit_stack: Optional[asyncio.ExitStack] = None
 
     async def connect_and_fetch_tools(self, url: str):
-        """
-        Connects to an MCP server via SSE and fetches available tools.
-        In FastAPI, this runs directly in the main event loop.
-        """
+
         if self.is_connected:
             await self.disconnect()
 
         try:
             from contextlib import AsyncExitStack
             self._exit_stack = AsyncExitStack()
-            
-            # 1. WAKE UP REMOTE SERVER (Render Services go to sleep)
-          
+
             print(f" MCP: Waking up server at {url}...")
             async with httpx.AsyncClient(timeout=10.0) as client:
                 try:
-                    # Just a simple ping to trigger Render's spin-up logic
+
                     await client.get(url.replace('/sse', ''))
                 except Exception as ping_err:
                     print(f" MCP Wake-up Ping Warning: {ping_err}")
 
-            # 2. Connect to SSE
             print(f" MCP: Connecting to SSE stream...")
             try:
-                # Use a combined context manager for better TaskGroup handling
+
                 read_stream, write_stream = await self._exit_stack.enter_async_context(sse_client(url))
-                
-                # 3. Start Session
+
                 self._session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
             except Exception as task_err:
-                # This catches the "unhandled errors in a TaskGroup" and provides a better message
+
                 return False, f"Server unreachable. It might be asleep or starting up. Please try again in 30 seconds."
-            
-            # 4. Initialize
+
             await self._session.initialize()
-            
-            # 4. Fetch Tools
+
             mcp_tools_response = await self._session.list_tools()
             mcp_tools = mcp_tools_response.tools
-            
+
             new_tools = []
             for tool in mcp_tools:
                 def create_tool_fn(tool_name):
@@ -66,7 +56,7 @@ class MCPToolManager:
                             return "Error: MCP Session not initialized."
                         try:
                             result = await self._session.call_tool(tool_name, arguments=kwargs)
-                            
+
                             if hasattr(result, "content"):
                                 try:
                                     return result.content[0].text
@@ -79,7 +69,7 @@ class MCPToolManager:
 
                 name = tool.name
                 description = tool.description or f"MCP Tool: {name}"
-                
+
                 try:
                     if hasattr(tool, "input_schema"):
                         schema = tool.input_schema
@@ -93,7 +83,7 @@ class MCPToolManager:
                     properties = schema.get("properties", {}) if isinstance(schema, dict) else getattr(schema, "properties", {})
                     required = schema.get("required", []) if isinstance(schema, dict) else getattr(schema, "required", [])
                     fields = {}
-                    
+
                     for prop_name, prop_info in properties.items():
                         p_type = Any
                         m_type = prop_info.get("type")
@@ -101,9 +91,9 @@ class MCPToolManager:
                         elif m_type == "number": p_type = float
                         elif m_type == "integer": p_type = int
                         elif m_type == "boolean": p_type = bool
-                        
+
                         default_val = ... if prop_name in required else None
-                        
+
                         fields[prop_name] = (
                             p_type, 
                             Field(
@@ -111,11 +101,11 @@ class MCPToolManager:
                                 description=prop_info.get("description", "")
                             )
                         )
-                    
+
                     args_schema = create_model(f"{name}_schema", **fields)
                 except Exception as e:
                     print(f" MCP: Schema generation failed for {name}: {str(e)}")
-                    # Use a generic fallback schema to avoid breaking tool-calling logic
+
                     class FallbackSchema(BaseModel):
                         arguments: dict = Field(default_factory=dict, description="Tool arguments")
                     args_schema = FallbackSchema
@@ -131,7 +121,7 @@ class MCPToolManager:
             self.tools = new_tools
             self.connected_url = url
             self.is_connected = True
-            
+
             print(f" Fast-MCP: Connected to {url} with {len(self.tools)} tools.")
             return True, "Connected successfully"
 
@@ -140,7 +130,7 @@ class MCPToolManager:
             return False, f"Connection failed: {str(e)}"
 
     async def disconnect(self):
-        """ Cleans up the session and streams. """
+
         if self._exit_stack:
             try:
                 await self._exit_stack.aclose()
@@ -150,9 +140,9 @@ class MCPToolManager:
                 else:
                     print(f" MCP Disconnect Warning: {str(e)}")
             except Exception as e:
-                # Catching any other cleanup errors
+
                 print(f" MCP Disconnect Error: {str(e)}")
-        
+
         self.tools = []
         self.is_connected = False
         self.connected_url = None

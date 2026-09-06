@@ -10,13 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-black: #000000;
-            --surface-dark: #121212;
-            --accent-orange: #f97316;
-            --accent-orange-hover: #ea580c;
-            --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
-            --border: #262626;
+            --bg-canvas: #F8FAFC;
+            --surface-card: #FFFFFF;
+            --purple-accent: #7C3AED;
+            --purple-hover: #6D28D9;
+            --purple-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #C084FC 100%);
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --border: #EDE9FE;
         }
 
         body {
@@ -24,19 +25,22 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background-color: var(--bg-black);
+            background-color: var(--bg-canvas);
+            background: radial-gradient(circle at 80% 0%, rgba(192, 132, 252, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 20% 100%, rgba(124, 58, 237, 0.1) 0%, transparent 45%),
+                        #F8FAFC;
             margin: 0;
             font-family: 'Outfit', sans-serif;
         }
 
         .auth-card {
-            background-color: var(--surface-dark);
+            background-color: var(--surface-card);
             padding: 2.5rem;
             border-radius: 24px;
             border: 1px solid var(--border);
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 50px -10px rgba(124, 58, 237, 0.15);
             text-align: center;
         }
 
@@ -47,7 +51,7 @@
         .auth-header i {
             width: 48px;
             height: 48px;
-            color: var(--accent-orange);
+            color: var(--purple-accent);
             margin-bottom: 1rem;
         }
 
@@ -55,6 +59,7 @@
             font-size: 1.8rem;
             color: var(--text-primary);
             margin: 0;
+            font-weight: 800;
         }
 
         .form-group {
@@ -67,42 +72,46 @@
             margin-bottom: 0.5rem;
             color: var(--text-secondary);
             font-size: 0.9rem;
+            font-weight: 600;
         }
 
         .form-control {
             width: 100%;
-            padding: 0.8rem;
-            background-color: #1a1a1a;
-            border: 1px solid var(--border);
+            padding: 0.8rem 1rem;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
             border-radius: 12px;
             color: var(--text-primary);
             font-family: inherit;
             box-sizing: border-box;
-            transition: border-color 0.2s;
+            transition: all 0.25s ease;
         }
 
         .form-control:focus {
-            border-color: var(--accent-orange);
+            border-color: var(--purple-accent);
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
             outline: none;
         }
 
         .btn-auth {
             width: 100%;
             padding: 1rem;
-            background-color: var(--accent-orange);
+            background: var(--purple-gradient);
             color: white;
             border: none;
             border-radius: 12px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
             margin-top: 1rem;
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
         }
 
         .btn-auth:hover {
-            background-color: var(--accent-orange-hover);
             transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35);
         }
 
         .auth-footer {
@@ -112,9 +121,9 @@
         }
 
         .auth-footer a {
-            color: var(--accent-orange);
+            color: var(--purple-accent);
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .auth-footer a:hover {
@@ -122,13 +131,14 @@
         }
 
         .error-msg {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
+            color: #DC2626;
+            background: #FEE2E2;
             padding: 0.75rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
             font-size: 0.9rem;
             display: none;
+            border: 1px solid #FCA5A5;
         }
     </style>
 </head>

@@ -8,28 +8,23 @@ from backend.llm import llm, get_llm_with_tools, static_tools
 from tools.mcp_tools import mcp_manager
 
 def chat_node_direct(state: ChatState):
-    """
-    Handles normal conversation without tools.
-    """
+
     messages = state["messages"]
     system_prompt = SystemMessage(content="""
-    You are a friendly assistant.
-    Answer naturally and conversationally.
+    You are a friendly and helpful AI assistant.
+    Always format metrics, data comparisons, rates, and key-value information as valid Markdown Pipe Tables (| Metric | Value |).
+    Use clear ### headers and bullet points for readable structured outputs.
     """)
 
-    # Sanitize history for text-only model
     processed_messages = sanitize_messages([system_prompt] + messages)
     response = llm.invoke(processed_messages)
 
     return {"messages": [response]}
 
 def chat_node_tools(state: ChatState):
-    """
-    Handles tool-based reasoning using the primary system prompt.
-    """
+
     messages = state["messages"]
 
-    # REASONING PROMPT: A comprehensive guide for the AI to decide on tool usage.
     reasoning_instruction = SystemMessage(content="""
 You are an Advanced AI Intelligence System with specialized tool-calling capabilities. 
 Your primary goal is to provide the user with the most accurate, real-time information possible.
@@ -42,20 +37,18 @@ CORE BEHAVIORAL PROTOCOLS:
 5. AMBIGUITY: If a query is slightly vague but clearly relates to a tool (e.g., "Delhi weather" vs "current weather in Delhi"), prioritize the tool.
 """)
 
-    # SUMMARIZATION PROMPT: A detailed guide on how to present tool data beautifully.
     summarization_instruction = SystemMessage(content="""
 You are a Senior Research AI specialized in data synthesis and user communication.
 You have just received raw data from a specialized tool. Your mission is to transform this data into a professional, human-readable response.
 
 PRESENTATION GUIDELINES:
-1. PERSONA: Be helpful, professional, and confident. Since you used a tool, you are the expert on this topic.
-2. NO REFUSALS: Under no circumstances should you say "I am an AI" or "I don't have access." The data you need is provided in the tool output. Use it.
-3. FORMATTING: Use Markdown to make your answer beautiful. Use **bolding** for key facts, bullet points for lists, and clear headers if the data is long.
-4. ACCURACY: Do not hallucinate. If the tool data is sparse, summarize what is there accurately. If the tool returned an error, explain it politely to the user.
-5. ENGAGEMENT: Your summary should be natural and directly answer the user's original question using the tool's findings.
+1. PERSONA: Be helpful, professional, and confident.
+2. NO REFUSALS: Under no circumstances say "I am an AI" or "I don't have access." Use the provided tool output accurately.
+3. STRUCTURED TABLES: ALWAYS format data, rates, metrics, forecasts, weather details, or comparisons using valid Markdown Pipe Tables (| Metric | Value |). NEVER use plain space-aligned columns or loose unformatted text for structured data.
+4. HEADERS & LISTS: Use ### section headers and bullet points (-) for clarity.
+5. ACCURACY: Summarize tool outputs accurately without hallucinating.
 """)
 
-    # Always use tool-enabled model so Groq doesn't reject ToolMessages in history
     model_to_use = get_llm_with_tools()
 
     if messages and messages[-1].type == "tool":
@@ -66,56 +59,52 @@ PRESENTATION GUIDELINES:
         print("--- MODE: Reasoning/Tool Selection ---")
 
     try:
-        # CONSOLIDATE SYSTEM MESSAGES
+
         system_content = current_instruction.content
         conv_messages = []
-        
+
         for m in messages:
             if isinstance(m, SystemMessage):
                 system_content += "\n\n" + str(m.content)
             else:
                 conv_messages.append(m)
-        
+
         merged_system = SystemMessage(content=system_content)
         final_history = [merged_system] + conv_messages
 
-        # Sanitize history for text-only model
         processed_messages = sanitize_messages(final_history)
         response = model_to_use.invoke(processed_messages)
-        
-        # LOGGING FOR DEBUGGING
+
         if hasattr(response, "tool_calls") and response.tool_calls:
             print(f"--- LLM GENERATED NATIVE TOOL CALLS: {len(response.tool_calls)} ---")
         else:
-            # FALLBACK: Check if model "hallucinated" a JSON tool call into its text response
+
             text_content = str(response.content)
             json_match = re.search(r'\{.*"name":\s*"([^"]+)".*\}', text_content, re.DOTALL)
-            
+
             if json_match:
                 print("--- DETECTED TEXT-BASED TOOL CALL (FALLBACK TRIGGERED) ---")
                 try:
-                    # Try to extract and clean the JSON
+
                     potential_json = json_match.group(0)
                     tool_data = json.loads(potential_json)
-                    
-                    # Manually inject into tool_calls format
+
                     response.tool_calls = [{
                         "name": tool_data.get("name"),
                         "args": tool_data.get("parameters") or tool_data.get("args") or {},
                         "id": f"call_{int(__import__('time').time())}"
                     }]
-                    # Clear the content so it doesn't show in UI
+
                     response.content = text_content.replace(potential_json, "").strip()
                 except Exception as parse_err:
                     print(f"--- FALLBACK PARSE FAILED: {parse_err} ---")
-            
+
             if not getattr(response, "tool_calls", None):
                 print(f"--- LLM GENERATED DIRECT RESPONSE ---")
                 print(f"    Content snippet: {str(response.content)[:50]}...")
     except Exception as e:
         print(f"--- LLM ERROR (chat_node_tools): {str(e)} ---")
-        
-        # SMART RETRY: If it failed, try one more time with stricter instructions
+
         if "validation" in str(e).lower() or "malformed" in str(e).lower() or "tool" in str(e).lower():
             print("--- RETRYING TOOL CALL WITH REINFORCED JSON INSTRUCTION ---")
             retry_instruction = SystemMessage(content="""
@@ -130,14 +119,13 @@ PRESENTATION GUIDELINES:
                 return {"messages": [response]}
             except Exception as retry_e:
                 print(f"--- RETRY FAILED: {str(retry_e)} ---")
-                e = retry_e # Fall through to normal error handling
-        
+                e = retry_e                                        
+
         traceback.print_exc()
         return {
             "messages": [AIMessage(content=f"I encountered a technical error: {str(e)}. Please try again.")]
         }
 
-    # POST-PROCESS: If the model echoed the tool-calling JSON into the content field, clear it.
     if hasattr(response, "tool_calls") and response.tool_calls:
         content_str = str(response.content).strip()
         if content_str.startswith("{") and content_str.endswith("}"):
@@ -146,10 +134,7 @@ PRESENTATION GUIDELINES:
     return {"messages": [response]}
 
 async def dynamic_tool_node(state: ChatState):
-    """
-    Executes tool calls generated by the LLM.
-    Handles both static tools and MCP tools dynamically.
-    """
+
     all_tools = {t.name: t for t in (static_tools or []) + (mcp_manager.tools or [])}
     last_message = state["messages"][-1]
 
@@ -161,7 +146,6 @@ async def dynamic_tool_node(state: ChatState):
             args = tool_call["args"] if isinstance(tool_call, dict) else tool_call.args
             tool_id = tool_call["id"] if isinstance(tool_call, dict) else tool_call.id
 
-            # Robust argument handling
             if isinstance(args, str):
                 args = {"query": args}
             if not isinstance(args, dict):

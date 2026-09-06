@@ -7,13 +7,11 @@ from tools import (
 )
 from tools.mcp_tools import mcp_manager
 
-# Initialize LLM
 llm = ChatGroq(
     model=DEFAULT_MODEL,
     temperature=0.1
 )
 
-# Static tools list
 static_tools = [
     calculator,
     web_search,
@@ -21,17 +19,14 @@ static_tools = [
 ]
 
 def get_llm_with_tools():
-    """
-    Dynamically binds tools (static + MCP) to the LLM.
-    Ensures all tools have descriptions before binding.
-    """
+
     all_tools = []
-    # Combine static tools and current MCP tools
+
     for t in (static_tools or []) + (mcp_manager.tools or []):
         if hasattr(t, "description") and t.description:
             all_tools.append(t)
         else:
             print(f" Skipping tool {getattr(t, 'name', 'unknown')} due to missing description.")
-    
-    print(f"🛠️ Binding {len(all_tools)} tools to the LLM: {[t.name for t in all_tools]}")
+
+    print(f"Binding {len(all_tools)} tools to the LLM: {[t.name for t in all_tools]}")
     return llm.bind_tools(all_tools, tool_choice="auto")
