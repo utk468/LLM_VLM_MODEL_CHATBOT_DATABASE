@@ -12,7 +12,7 @@
 
 .mcp-connector-card:hover {
     border-color: var(--purple-400);
-    box-shadow: 0 8px 24px -4px rgba(124, 58, 237, 0.12);
+    box-shadow: 0 8px 24px -4px rgba(128, 61, 243, 0.12);
 }
 
 .status-badge {
